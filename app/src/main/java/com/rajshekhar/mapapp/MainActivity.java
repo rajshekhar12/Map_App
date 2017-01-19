@@ -41,6 +41,7 @@ import java.util.List;
 public  class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     GoogleMap mGoogleMap;
+    GoogleApiClient mGoogleApiClient;
 
 
     @Override
@@ -77,7 +78,7 @@ public  class MainActivity extends AppCompatActivity implements OnMapReadyCallba
 
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-       // gotoLocactionZoom(12.913255, 77.6259, 15);
+        gotoLocactionZoom(12.913255,77.6259,15);
 
 
        /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -98,5 +99,36 @@ public  class MainActivity extends AppCompatActivity implements OnMapReadyCallba
         // mGoogleApiClient.connect();
 
     }
+
+    private void gotoLocaction(double lat, double lng) {
+        LatLng ll=new LatLng(lat,lng);
+        CameraUpdate update=CameraUpdateFactory.newLatLng(ll);
+        mGoogleMap.moveCamera(update);
+
+    }
+
+    private void gotoLocactionZoom(double lat, double lng,float zoom) {
+        LatLng ll=new LatLng(lat,lng);
+        CameraUpdate update=CameraUpdateFactory.newLatLngZoom(ll,zoom);
+        mGoogleMap.moveCamera(update);
+
+    }
+
+    public void geoLocate(View view) throws IOException {
+        EditText et = (EditText) findViewById(R.id.editText);
+        String location = et.getText().toString();
+
+        Geocoder gc = new Geocoder(this);
+        List<android.location.Address> list = gc.getFromLocationName(location, 1);
+        android.location.Address address = list.get(0);
+        String localoty = address.getLocality();
+
+        double lat = address.getLatitude();
+        double lng = address.getLongitude();
+
+        gotoLocactionZoom(lat, lng, 15);
+
+    }
+
 
 }
