@@ -38,7 +38,7 @@ import java.io.IOException;
 import java.util.List;
 
 
-public  class MainActivity extends AppCompatActivity implements OnMapReadyCallback {
+public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
 
     GoogleMap mGoogleMap;
     GoogleApiClient mGoogleApiClient;
@@ -74,12 +74,11 @@ public  class MainActivity extends AppCompatActivity implements OnMapReadyCallba
         return false;
     }
 
-   // @Override
+    // @Override
 
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
-        gotoLocactionZoom(12.913255,77.6259,15);
-
+        //gotoLocactionZoom(12.913255, 77.6259, 15);
 
        /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -94,22 +93,27 @@ public  class MainActivity extends AppCompatActivity implements OnMapReadyCallba
             }
         }
         mGoogleMap.setMyLocationEnabled(true);*/
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
 
 
-        // mGoogleApiClient.connect();
+        mGoogleApiClient.connect();
 
     }
 
     private void gotoLocaction(double lat, double lng) {
-        LatLng ll=new LatLng(lat,lng);
-        CameraUpdate update=CameraUpdateFactory.newLatLng(ll);
+        LatLng ll = new LatLng(lat, lng);
+        CameraUpdate update = CameraUpdateFactory.newLatLng(ll);
         mGoogleMap.moveCamera(update);
 
     }
 
-    private void gotoLocactionZoom(double lat, double lng,float zoom) {
-        LatLng ll=new LatLng(lat,lng);
-        CameraUpdate update=CameraUpdateFactory.newLatLngZoom(ll,zoom);
+    private void gotoLocactionZoom(double lat, double lng, float zoom) {
+        LatLng ll = new LatLng(lat, lng);
+        CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, zoom);
         mGoogleMap.moveCamera(update);
 
     }
@@ -157,5 +161,48 @@ public  class MainActivity extends AppCompatActivity implements OnMapReadyCallba
         return super.onOptionsItemSelected(item);
     }
 
+    LocationRequest mLocationReques;
 
+
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        mLocationReques = LocationRequest.create();
+        mLocationReques.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationReques.setInterval(1000);
+
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationReques, this);
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        if(location==null){
+            Toast.makeText(MainActivity.this,"Can't find your location",Toast.LENGTH_LONG).show();
+        }else{
+            LatLng ll = new LatLng(location.getLatitude(),location.getLongitude());
+            CameraUpdate update=CameraUpdateFactory.newLatLngZoom(ll,15);
+            mGoogleMap.moveCamera(update);
+        }
+
+    }
 }
