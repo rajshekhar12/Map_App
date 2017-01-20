@@ -2,6 +2,7 @@ package com.rajshekhar.mapapp;
 
 import android.app.Dialog;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
 import android.graphics.Camera;
 import android.graphics.Color;
 import android.location.Geocoder;
@@ -35,6 +36,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MapStyleOptions;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
@@ -81,6 +83,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
         mGoogleMap = googleMap;
         //gotoLocactionZoom(12.913255, 77.6259, 15);
+        try {
+            // Customise the styling of the base map using a JSON object defined
+            // in a raw resource file.
+            boolean success = googleMap.setMapStyle(
+                    MapStyleOptions.loadRawResourceStyle(
+                            this, R.raw.style_json));
+
+            if (!success) {
+                Toast.makeText(MainActivity.this, "\"Style parsing failed\"", Toast.LENGTH_SHORT).show();
+            }
+        } catch (Resources.NotFoundException e) {
+            Toast.makeText(MainActivity.this, "\"Cant find style\"", Toast.LENGTH_SHORT).show();
+
+        }
+
 
        /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
