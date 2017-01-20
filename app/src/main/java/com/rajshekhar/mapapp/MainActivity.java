@@ -3,6 +3,7 @@ package com.rajshekhar.mapapp;
 import android.app.Dialog;
 import android.content.pm.PackageManager;
 import android.graphics.Camera;
+import android.graphics.Color;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Build;
@@ -31,6 +32,8 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -48,7 +51,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (googleServiceAvialable()) {
-
             Toast.makeText(MainActivity.this, "Perfect", Toast.LENGTH_SHORT).show();
             setContentView(R.layout.activity_main);
             initMap();
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.mapFragment);
         mapFragment.getMapAsync(this);
     }
-
+     // Check Google sevice is avialable in device or not
     public boolean googleServiceAvialable() {
         GoogleApiAvailability api = GoogleApiAvailability.getInstance();
         int isAvialable = api.isGooglePlayServicesAvailable(this);
@@ -98,47 +100,58 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 .build();
-
-
         mGoogleApiClient.connect();
 
-    }
-
-    private void gotoLocaction(double lat, double lng) {
-        LatLng ll = new LatLng(lat, lng);
-        CameraUpdate update = CameraUpdateFactory.newLatLng(ll);
-        mGoogleMap.moveCamera(update);
 
     }
 
+    Circle circle;
+
+    //Go to desire locaion with zoom
     private void gotoLocactionZoom(double lat, double lng, float zoom) {
         LatLng ll = new LatLng(lat, lng);
         CameraUpdate update = CameraUpdateFactory.newLatLngZoom(ll, zoom);
         mGoogleMap.moveCamera(update);
 
-    }
+        if(circle!=null){
+            circle.remove();
+        }
+        circle=drawCircle(new LatLng(lat,lng));
 
+    }
+    private Circle drawCircle(LatLng latlng){
+
+        CircleOptions option=new CircleOptions()
+                .center(latlng)
+                .radius(5000)
+                .fillColor(0x330000FF)
+                .strokeColor(Color.BLUE)
+                .strokeWidth(3);
+        return mGoogleMap.addCircle(option);
+    }
+    // code for button(search) click
     public void geoLocate(View view) throws IOException {
         EditText et = (EditText) findViewById(R.id.editText);
         String location = et.getText().toString();
 
         Geocoder gc = new Geocoder(this);
         List<android.location.Address> list = gc.getFromLocationName(location, 1);
-        android.location.Address address = list.get(0);
+        android.location.Address address = list.get(0);//it sows only first data in array list
         String localoty = address.getLocality();
 
         double lat = address.getLatitude();
         double lng = address.getLongitude();
 
         gotoLocactionZoom(lat, lng, 15);
-    }
 
+    }
+    //call menu layout
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
-
+    //implement optional context menu
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -163,12 +176,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     LocationRequest mLocationReques;
 
-
     @Override
     public void onConnected(@Nullable Bundle bundle) {
+        //circle.remove();
         mLocationReques = LocationRequest.create();
         mLocationReques.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationReques.setInterval(1000);
+        mLocationReques.setInterval(100000);
 
         if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
             // TODO: Consider calling
@@ -181,8 +194,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             return;
         }
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient, mLocationReques, this);
+        mGoogleMap.setMyLocationEnabled(true);
 
     }
+
 
     @Override
     public void onConnectionSuspended(int i) {
@@ -198,10 +213,21 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onLocationChanged(Location location) {
         if(location==null){
             Toast.makeText(MainActivity.this,"Can't find your location",Toast.LENGTH_LONG).show();
+
         }else{
+
             LatLng ll = new LatLng(location.getLatitude(),location.getLongitude());
             CameraUpdate update=CameraUpdateFactory.newLatLngZoom(ll,15);
             mGoogleMap.moveCamera(update);
+            // call circle method
+            if(circle!=null){
+                circle.remove();
+            }
+            circle=drawCircle(new LatLng(location.getLatitude(),location.getLongitude()));
+
+            //circle.remove();
+
+
         }
 
     }
